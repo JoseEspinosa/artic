@@ -1,7 +1,5 @@
 # ![nf-core/arctic](docs/images/nf-core-arctic_logo.png)
 
-**nf-core ARTIC field bioinformatics pipeline**.
-
 [![GitHub Actions CI Status](https://github.com/nf-core/arctic/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/arctic/actions)
 [![GitHub Actions Linting Status](https://github.com/nf-core/arctic/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/arctic/actions)
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/)
@@ -10,6 +8,12 @@
 [![Docker](https://img.shields.io/docker/automated/nfcore/arctic.svg)](https://hub.docker.com/r/nfcore/arctic)
 
 ## Introduction
+
+The implementation of nf-core/arctic is an international collaboration between numerous contributors and developers. We appreciated the need to have a portable, reproducible and scalable pipeline for the analysis of COVID-19 sequencing samples and so the Avengers Assemble! Please come and join us and add yourself to the contributor list :)
+
+This pipeline is a re-implementation of the amazing work already carried out by contributors to the [ARCTIC Network's field bioinformatics pipeline](https://github.com/artic-network/fieldbioinformatics) and associated [bioinformatics protocol](https://artic.network/ncov-2019/ncov2019-bioinformatics-sop.html). [Matt Bull's Nextflow implementation]( https://github.com/connor-lab/ncov2019-artic-nf) was also used for some much needed inspiration.
+
+The plan is to fully containerise and support both Nanopore (including demultiplexing) and Illumina (pre-demultiplexed) data in the same workflow.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
@@ -32,7 +36,7 @@ iv. Start running your own analysis!
 <!-- TODO nf-core: Update the default command above used to run the pipeline -->
 
 ```bash
-nextflow run nf-core/arctic -profile <docker/singularity/conda/institute> --reads '*_R{1,2}.fastq.gz' --genome GRCh37
+nextflow run nf-core/arctic -profile <docker/singularity/conda/institute> --input samplesheet.csv
 ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
@@ -54,7 +58,20 @@ The nf-core/arctic pipeline comes with documentation about the pipeline, found i
 
 ## Credits
 
-nf-core/arctic was originally written by International consortium of contributors and developers fighting COVID-19..
+| Name                                                      | Affiliation                                                                           |
+|-----------------------------------------------------------|---------------------------------------------------------------------------------------|
+| [Alexander Peltzer](https://github.com/apeltzer)          | [Boehringer Ingelheim, Germany](https://www.boehringer-ingelheim.de/)                 |
+| [Gisela Gabernet](https://github.com/ggabernet)           | [QBIC, University of Tubingen, Germany](https://portal.qbic.uni-tuebingen.de/portal/) |
+| [Harshil Patel](https://github.com/drpatelh)              | [The Francis Crick Institute, UK](https://www.crick.ac.uk/)                           |
+| [Matt Bull](https://github.com/m-bull)                    | [Public Health Wales, UK](https://phw.nhs.wales/)                                     |
+| [Maxime Garcia](https://github.com/MaxUlysse)             | [SciLifeLab, Sweden](https://www.scilifelab.se/)                                      |
+| [Nick Loman](https://github.com/nickloman)                | [University of Birmingham, UK](https://www.birmingham.ac.uk)                          |
+| [Olga Botvinnik](https://github.com/olgabot)              | [Chan Zuckerberg Biohub, USA](https://www.czbiohub.org/)                              |
+| [Phil Ewels](https://github.com/ewels)                    | [SciLifeLab, Sweden](https://www.scilifelab.se/)                                      |
+| [Thanh Le Viet](https://github.com/thanhleviet)           | [Quadram Institute, UK](https://quadram.ac.uk/)                                       |
+| [Will Rowe](https://github.com/will-rowe)                 | [University of Birmingham, UK](https://www.birmingham.ac.uk)                          |
+
+> Listed in alphabetical order
 
 ## Contributions and Support
 
