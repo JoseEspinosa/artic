@@ -11,7 +11,7 @@
 
 The implementation of nf-core/arctic is an international collaboration between numerous contributors and developers. We appreciated the need to have a portable, reproducible and scalable pipeline for the analysis of COVID-19 sequencing samples and so the Avengers Assemble! Please come and join us and add yourself to the contributor list :)
 
-This pipeline is a re-implementation of the amazing work already carried out by contributors to the [ARCTIC Network's field bioinformatics pipeline](https://github.com/artic-network/fieldbioinformatics) and associated [bioinformatics protocol](https://artic.network/ncov-2019/ncov2019-bioinformatics-sop.html). [Matt Bull's Nextflow implementation]( https://github.com/connor-lab/ncov2019-artic-nf) was also used for some much needed inspiration.
+This pipeline is a re-implementation of the amazing work already carried out by contributors to the [ARCTIC Network's field bioinformatics pipeline](https://github.com/artic-network/fieldbioinformatics) and their associated [bioinformatics protocol](https://artic.network/ncov-2019/ncov2019-bioinformatics-sop.html). [Matt Bull's Nextflow implementation]( https://github.com/connor-lab/ncov2019-artic-nf) was also used for some much needed inspiration.
 
 The plan is to fully containerise and support both Nanopore (including demultiplexing) and Illumina (pre-demultiplexed) data in the same workflow.
 
@@ -21,12 +21,12 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 i. Install [`nextflow`](https://nf-co.re/usage/installation)
 
-ii. Install either [`Docker`](https://docs.docker.com/engine/installation/) or [`Singularity`](https://www.sylabs.io/guides/3.0/user-guide/) for full pipeline reproducibility (please only use [`Conda`](https://conda.io/miniconda.html) as a last resort; see [docs](https://nf-co.re/usage/configuration#basic-configuration-profiles))
+ii. Install either [`Docker`](https://docs.docker.com/engine/installation/) or [`Singularity`](https://www.sylabs.io/guides/3.0/user-guide/) for full pipeline reproducibility
 
 iii. Download the pipeline and test it on a minimal dataset with a single command
 
 ```bash
-nextflow run nf-core/arctic -profile test,<docker/singularity/conda/institute>
+nextflow run nf-core/arctic -profile test,<docker/singularity/institute>
 ```
 
 > Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
