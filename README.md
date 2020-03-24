@@ -17,7 +17,7 @@ This pipeline is a re-implementation of the amazing work already carried out by 
 
 The plan is to fully containerise and support both pre-demultiplexed Nanopore and Illumina data in the same workflow.
 
-If you need to demultiplex Nanopore data beforehand you can use the Guppy implementation in the [nf-core/nanoseq][https://github.com/nf-core/nanoseq] pipeline (NOTE: GPUs are also supported) The parameters you provide will depend on the protocol you used to sequence the samples (see [usage docs](https://github.com/nf-core/nanoseq/blob/master/docs/usage.md#--input)). An example command:
+If you need to demultiplex Nanopore data beforehand you can use the Guppy implementation in the [nf-core/nanoseq](https://github.com/nf-core/nanoseq) pipeline (NOTE: GPUs are also supported) The parameters you provide will depend on the protocol you used to sequence the samples (see [usage docs](https://github.com/nf-core/nanoseq/blob/master/docs/usage.md#--input)). An example command:
 
 ```bash
 nextflow run nf-core/nanoseq \
