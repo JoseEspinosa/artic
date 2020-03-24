@@ -21,8 +21,8 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Pull docker image
         run: |
-          docker pull nfcore/arctic:dev
-          docker tag nfcore/arctic:dev nfcore/arctic:dev
+          docker pull nfcore/artic:dev
+          docker tag nfcore/artic:dev nfcore/artic:dev
       - name: Run pipeline with test data
         run: |
           # TODO nf-core: You can customise CI pipeline run tests as required
@@ -45,8 +45,8 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Pull docker image
         run: |
-          docker pull nfcore/arctic:dev
-          docker tag nfcore/arctic:dev nfcore/arctic:dev
+          docker pull nfcore/artic:dev
+          docker tag nfcore/artic:dev nfcore/artic:dev
       - name: Run pipeline with various options
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test,docker ${{ matrix.parameters }}

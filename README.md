@@ -1,19 +1,19 @@
-# ![nf-core/arctic](docs/images/nf-core-arctic_logo.png)
+# ![nf-core/artic](docs/images/nf-core-artic_logo.png)
 
-[![GitHub Actions CI Status](https://github.com/nf-core/arctic/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/arctic/actions)
-[![GitHub Actions Linting Status](https://github.com/nf-core/arctic/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/arctic/actions)
+[![GitHub Actions CI Status](https://github.com/nf-core/artic/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/artic/actions)
+[![GitHub Actions Linting Status](https://github.com/nf-core/artic/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/artic/actions)
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/)
 
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
-[![Docker](https://img.shields.io/docker/automated/nfcore/arctic.svg)](https://hub.docker.com/r/nfcore/arctic)
+[![Docker](https://img.shields.io/docker/automated/nfcore/artic.svg)](https://hub.docker.com/r/nfcore/artic)
 
 ## Introduction
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
-The implementation of nf-core/arctic is an international collaboration between numerous contributors and developers. We appreciated the need to have a portable, reproducible and scalable pipeline for the analysis of COVID-19 sequencing samples and so the Avengers Assembled! Please come and join us and add yourself to the contributor list :)
+The implementation of nf-core/artic is an international collaboration between numerous contributors and developers. We appreciated the need to have a portable, reproducible and scalable pipeline for the analysis of COVID-19 sequencing samples and so the Avengers Assembled! Please come and join us and add yourself to the contributor list :)
 
-This pipeline is a re-implementation of the amazing work already carried out by contributors to the [ARCTIC Network's field bioinformatics pipeline](https://github.com/artic-network/fieldbioinformatics) and their associated [bioinformatics protocol](https://artic.network/ncov-2019/ncov2019-bioinformatics-sop.html). [Matt Bull's Nextflow implementation]( https://github.com/connor-lab/ncov2019-artic-nf) was also used for some much needed inspiration.
+This pipeline is a re-implementation of the amazing work already carried out by contributors to the [ARTIC Network's field bioinformatics pipeline](https://github.com/artic-network/fieldbioinformatics) and their associated [bioinformatics protocol](https://artic.network/ncov-2019/ncov2019-bioinformatics-sop.html). [Matt Bull's Nextflow implementation]( https://github.com/connor-lab/ncov2019-artic-nf) was also used for some much needed inspiration.
 
 The plan is to fully containerise and support both pre-demultiplexed Nanopore and Illumina data in the same workflow.
 
@@ -39,7 +39,7 @@ ii. Install either [`Docker`](https://docs.docker.com/engine/installation/) or [
 iii. Download the pipeline and test it on a minimal dataset with a single command
 
 ```bash
-nextflow run nf-core/arctic -profile test,<docker/singularity/institute>
+nextflow run nf-core/artic -profile test,<docker/singularity/institute>
 ```
 
 > Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
@@ -49,14 +49,14 @@ iv. Start running your own analysis!
 <!-- TODO nf-core: Update the default command above used to run the pipeline -->
 
 ```bash
-nextflow run nf-core/arctic -profile <docker/singularity/conda/institute> --input samplesheet.csv
+nextflow run nf-core/artic -profile <docker/singularity/conda/institute> --input samplesheet.csv
 ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 
 ## Documentation
 
-The nf-core/arctic pipeline comes with documentation about the pipeline, found in the `docs/` directory:
+The nf-core/artic pipeline comes with documentation about the pipeline, found in the `docs/` directory:
 
 1. [Installation](https://nf-co.re/usage/installation)
 2. Pipeline configuration
@@ -90,12 +90,12 @@ The nf-core/arctic pipeline comes with documentation about the pipeline, found i
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-For further information or help, don't hesitate to get in touch on [Slack](https://nfcore.slack.com/channels/arctic) (you can join with [this invite](https://nf-co.re/join/slack)).
+For further information or help, don't hesitate to get in touch on [Slack](https://nfcore.slack.com/channels/artic) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 ## Citation
 
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi. -->
-<!-- If you use  nf-core/arctic for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+<!-- If you use  nf-core/artic for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
 You can cite the `nf-core` publication as follows:
 
