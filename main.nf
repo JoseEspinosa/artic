@@ -135,13 +135,15 @@ process CHECK_SAMPLESHEET {
     tag "$samplesheet"
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode
 
+    cache false
+
     input:
     file samplesheet from ch_input
 
     output:
     file "*.csv" into ch_samplesheet_reformat
 
-    script:  // This script is bundled with the pipeline, in nf-core/covid19/bin/
+    script:  // This script is bundled with the pipeline, in nf-core/arctic/bin/
     """
     check_samplesheet.py $samplesheet samplesheet_reformat.csv
     """
@@ -170,8 +172,8 @@ def validate_input(LinkedHashMap sample) {
 ch_samplesheet_reformat
     .splitCsv(header:true, sep:',')
     .map { validate_input(it) }
-    .into { ch_reads_nanoplot;
-            ch_reads_fastqc;
+    .into { ch_reads_fastqc;
+            ch_reads_nanoplot;
             ch_reads_align }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -182,70 +184,76 @@ ch_samplesheet_reformat
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// /*
-//  * STEP 1: Illumina and Nanopore FastQC
-//  */
-// process FASTQC {
-//     tag "$sample"
-//     label 'process_medium'
-//     publishDir "${params.outdir}/fastqc", mode: params.publish_dir_mode,
-//         saveAs: { filename ->
-//                       filename.endsWith(".zip") ? "zips/$filename" : "$filename"
-//                 }
-//
-//     when:
-//     !params.skip_fastqc && !params.skip_qc
-//
-//     input:
-//     set val(sample), val(single_end), val(long_reads), file(reads) from ch_reads_fastqc
-//
-//     output:
-//     file "*.{zip,html}" into ch_fastqc_reports_mqc
-//
-//     script:
-//     // Added soft-links to original fastqs for consistent naming in MultiQC
-//     if (single_end || long_reads) {
-//         """
-//         [ ! -f  ${sample}.fastq.gz ] && ln -s $reads ${sample}.fastq.gz
-//         fastqc -q -t $task.cpus ${sample}.fastq.gz
-//         """
-//     } else {
-//         """
-//         [ ! -f  ${sample}_1.fastq.gz ] && ln -s ${reads[0]} ${sample}_1.fastq.gz
-//         [ ! -f  ${sample}_2.fastq.gz ] && ln -s ${reads[1]} ${sample}_2.fastq.gz
-//         fastqc -q -t $task.cpus ${sample}_1.fastq.gz
-//         fastqc -q -t $task.cpus ${sample}_2.fastq.gz
-//         """
-//     }
-// }
-//
-// /*
-//  * STEP 2: Nanopore FastQ QC using NanoPlot
-//  */
-// process NANOPLOT {
-//     tag "$sample"
-//     label 'process_low'
-//     publishDir "${params.outdir}/nanoplot/${sample}", mode: params.publish_dir_mode
-//
-//     when:
-//     !params.skip_nanoplot && !params.skip_qc && long_reads
-//
-//     input:
-//     set val(sample), val(single_end), val(long_reads), file(reads) from ch_reads_nanoplot
-//
-//     output:
-//     file "*.{png,html,txt,log}"
-//
-//     script:
-//     """
-//     NanoPlot -t $task.cpus --fastq $reads
-//     """
-// }
+/*
+ * STEP 1: Illumina and Nanopore FastQC
+ */
+process FASTQC {
+    tag "$sample"
+    label 'process_medium'
+    publishDir "${params.outdir}/fastqc", mode: params.publish_dir_mode,
+        saveAs: { filename ->
+                      filename.endsWith(".zip") ? "zips/$filename" : "$filename"
+                }
+
+    when:
+    !params.skip_fastqc && !params.skip_qc
+
+    input:
+    set val(sample), val(single_end), val(long_reads), file(reads) from ch_reads_fastqc
+
+    output:
+    file "*.{zip,html}" into ch_fastqc_reports_mqc
+
+    script:
+    // Added soft-links to original fastqs for consistent naming in MultiQC
+    if (single_end || long_reads) {
+        """
+        [ ! -f  ${sample}.fastq.gz ] && ln -s $reads ${sample}.fastq.gz
+        fastqc -q -t $task.cpus ${sample}.fastq.gz
+        """
+    } else {
+        """
+        [ ! -f  ${sample}_1.fastq.gz ] && ln -s ${reads[0]} ${sample}_1.fastq.gz
+        [ ! -f  ${sample}_2.fastq.gz ] && ln -s ${reads[1]} ${sample}_2.fastq.gz
+        fastqc -q -t $task.cpus ${sample}_1.fastq.gz
+        fastqc -q -t $task.cpus ${sample}_2.fastq.gz
+        """
+    }
+}
+
+/*
+ * STEP 2: Nanopore FastQ QC using NanoPlot
+ */
+process NANOPLOT {
+    tag "$sample"
+    label 'process_low'
+    publishDir "${params.outdir}/nanoplot/${sample}", mode: params.publish_dir_mode
+
+    when:
+    !params.skip_nanoplot && !params.skip_qc && long_reads
+
+    input:
+    set val(sample), val(single_end), val(long_reads), file(reads) from ch_reads_nanoplot
+
+    output:
+    file "*.{png,html,txt,log}"
+
+    script:
+    """
+    NanoPlot -t $task.cpus --fastq $reads
+    """
+}
 
 
 
 
-
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/* --                                                                     -- */
+/* --                          MULTIQC                                    -- */
+/* --                                                                     -- */
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 Channel.from(summary.collect{ [it.key, it.value] })
     .map { k,v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
@@ -273,9 +281,6 @@ process get_software_versions {
                       else null
                 }
 
-    input:
-    file guppy from ch_guppy_version.collect().ifEmpty([])
-
     output:
     file 'software_versions_mqc.yaml' into ch_software_versions_yaml
     file "software_versions.csv"
@@ -287,6 +292,7 @@ process get_software_versions {
     echo $workflow.nextflow.version > v_nextflow.txt
     NanoPlot --version &> v_nanoplot.txt
     fastqc --version > v_fastqc.txt
+    echo \$(bwa 2>&1) > v_bwa.txt
     minimap2 --version &> v_minimap2.txt
     samtools --version > v_samtools.txt
     bedtools --version > v_bedtools.txt
@@ -295,39 +301,39 @@ process get_software_versions {
     """
 }
 
-// /*
-//  * STEP 10: MultiQC
-//  */
-// process MULTIQC {
-//     publishDir "${params.outdir}/multiqc", mode: params.publish_dir_mode
-//
-//     when:
-//     !params.skip_multiqc
-//
-//     input:
-//     file (multiqc_config) from ch_multiqc_config
-//     file (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
-//     file ('fastqc/*') from ch_fastqc_reports_mqc.collect().ifEmpty([])
-//     file ('samtools/*')  from ch_sortbam_stats_mqc.collect().ifEmpty([])
-//     file ('software_versions/*') from software_versions_yaml.collect()
-//     file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
-//
-//     output:
-//     file "*multiqc_report.html" into ch_multiqc_report
-//     file "*_data"
-//     file "multiqc_plots"
-//
-//     script:
-//     rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
-//     rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
-//     custom_config_file = params.multiqc_config ? "--config $mqc_custom_config" : ''
-//     """
-//     multiqc . -f $rtitle $rfilename $custom_config_file -m custom_content -m fastqc -m samtools
-//     """
-// }
+/*
+ * STEP 10: MultiQC
+ */
+process MULTIQC {
+    publishDir "${params.outdir}/multiqc", mode: params.publish_dir_mode
+
+    when:
+    !params.skip_multiqc
+
+    input:
+    file (multiqc_config) from ch_multiqc_config
+    file (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
+    file ('fastqc/*') from ch_fastqc_reports_mqc.collect().ifEmpty([])
+    //file ('samtools/*')  from ch_sortbam_stats_mqc.collect().ifEmpty([])
+    file ('software_versions/*') from ch_software_versions_yaml.collect()
+    file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
+
+    output:
+    file "*multiqc_report.html" into ch_multiqc_report
+    file "*_data"
+    file "multiqc_plots"
+
+    script:
+    rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
+    rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
+    custom_config_file = params.multiqc_config ? "--config $mqc_custom_config" : ''
+    """
+    multiqc . -f $rtitle $rfilename $custom_config_file -m custom_content -m fastqc -m samtools
+    """
+}
 
 /*
- * STEP 3 - Output Description HTML
+ * STEP 11: Output Description HTML
  */
 process output_documentation {
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode
