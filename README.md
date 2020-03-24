@@ -1,13 +1,13 @@
-# ![nf-core/arctic](docs/images/nf-core-arctic_logo.png)
+# ![nf-core/artic](docs/images/nf-core-artic_logo.png)
 
 **nf-core ARTIC field bioinformatics pipeline**.
 
-[![GitHub Actions CI Status](https://github.com/nf-core/arctic/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/arctic/actions)
-[![GitHub Actions Linting Status](https://github.com/nf-core/arctic/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/arctic/actions)
+[![GitHub Actions CI Status](https://github.com/nf-core/artic/workflows/nf-core%20CI/badge.svg)](https://github.com/nf-core/artic/actions)
+[![GitHub Actions Linting Status](https://github.com/nf-core/artic/workflows/nf-core%20linting/badge.svg)](https://github.com/nf-core/artic/actions)
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/)
 
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
-[![Docker](https://img.shields.io/docker/automated/nfcore/arctic.svg)](https://hub.docker.com/r/nfcore/arctic)
+[![Docker](https://img.shields.io/docker/automated/nfcore/artic.svg)](https://hub.docker.com/r/nfcore/artic)
 
 ## Introduction
 
@@ -22,7 +22,7 @@ ii. Install either [`Docker`](https://docs.docker.com/engine/installation/) or [
 iii. Download the pipeline and test it on a minimal dataset with a single command
 
 ```bash
-nextflow run nf-core/arctic -profile test,<docker/singularity/conda/institute>
+nextflow run nf-core/artic -profile test,<docker/singularity/conda/institute>
 ```
 
 > Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
@@ -32,14 +32,14 @@ iv. Start running your own analysis!
 <!-- TODO nf-core: Update the default command above used to run the pipeline -->
 
 ```bash
-nextflow run nf-core/arctic -profile <docker/singularity/conda/institute> --reads '*_R{1,2}.fastq.gz' --genome GRCh37
+nextflow run nf-core/artic -profile <docker/singularity/conda/institute> --reads '*_R{1,2}.fastq.gz' --genome GRCh37
 ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 
 ## Documentation
 
-The nf-core/arctic pipeline comes with documentation about the pipeline, found in the `docs/` directory:
+The nf-core/artic pipeline comes with documentation about the pipeline, found in the `docs/` directory:
 
 1. [Installation](https://nf-co.re/usage/installation)
 2. Pipeline configuration
@@ -54,18 +54,18 @@ The nf-core/arctic pipeline comes with documentation about the pipeline, found i
 
 ## Credits
 
-nf-core/arctic was originally written by International consortium of contributors and developers fighting COVID-19..
+nf-core/artic was originally written by International consortium of contributors and developers fighting COVID-19..
 
 ## Contributions and Support
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-For further information or help, don't hesitate to get in touch on [Slack](https://nfcore.slack.com/channels/arctic) (you can join with [this invite](https://nf-co.re/join/slack)).
+For further information or help, don't hesitate to get in touch on [Slack](https://nfcore.slack.com/channels/artic) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 ## Citation
 
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi. -->
-<!-- If you use  nf-core/arctic for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+<!-- If you use  nf-core/artic for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
 You can cite the `nf-core` publication as follows:
 

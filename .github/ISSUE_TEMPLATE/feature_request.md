@@ -1,4 +1,4 @@
-# nf-core/arctic feature request
+# nf-core/artic feature request
 
 Hi there!
 
