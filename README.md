@@ -11,7 +11,7 @@
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
-The implementation of nf-core/arctic is an international collaboration between numerous contributors and developers. We appreciated the need to have a portable, reproducible and scalable pipeline for the analysis of COVID-19 sequencing samples and so the Avengers Assemble! Please come and join us and add yourself to the contributor list :)
+The implementation of nf-core/arctic is an international collaboration between numerous contributors and developers. We appreciated the need to have a portable, reproducible and scalable pipeline for the analysis of COVID-19 sequencing samples, the Avengers Assembled! Please come and join us and add yourself to the contributor list :)
 
 This pipeline is a re-implementation of the amazing work already carried out by contributors to the [ARCTIC Network's field bioinformatics pipeline](https://github.com/artic-network/fieldbioinformatics) and their associated [bioinformatics protocol](https://artic.network/ncov-2019/ncov2019-bioinformatics-sop.html). [Matt Bull's Nextflow implementation]( https://github.com/connor-lab/ncov2019-artic-nf) was also used for some much needed inspiration.
 
