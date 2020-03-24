@@ -9,13 +9,26 @@
 
 ## Introduction
 
+The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
+
 The implementation of nf-core/arctic is an international collaboration between numerous contributors and developers. We appreciated the need to have a portable, reproducible and scalable pipeline for the analysis of COVID-19 sequencing samples and so the Avengers Assemble! Please come and join us and add yourself to the contributor list :)
 
 This pipeline is a re-implementation of the amazing work already carried out by contributors to the [ARCTIC Network's field bioinformatics pipeline](https://github.com/artic-network/fieldbioinformatics) and their associated [bioinformatics protocol](https://artic.network/ncov-2019/ncov2019-bioinformatics-sop.html). [Matt Bull's Nextflow implementation]( https://github.com/connor-lab/ncov2019-artic-nf) was also used for some much needed inspiration.
 
-The plan is to fully containerise and support both Nanopore (including demultiplexing) and Illumina (pre-demultiplexed) data in the same workflow.
+The plan is to fully containerise and support both pre-demultiplexed Nanopore and Illumina data in the same workflow.
 
-The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
+If you need to demultiplex Nanopore data beforehand you can use the Guppy implementation in the [nf-core/nanoseq][https://github.com/nf-core/nanoseq] pipeline (NOTE: GPUs are also supported) The parameters you provide will depend on the protocol you used to sequence the samples (see [usage docs](https://github.com/nf-core/nanoseq/blob/master/docs/usage.md#--input)). An example command:
+
+```bash
+nextflow run nf-core/nanoseq \
+    --input samplesheet.csv \
+    --protocol DNA \
+    --input_path ./fast5/ \
+    --flowcell FLO-MIN106 \
+    --kit SQK-LSK109 \
+    --barcode_kit SQK-PBK004 \
+    -profile <docker/singularity/institute>
+```
 
 ## Quick Start
 
