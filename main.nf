@@ -220,29 +220,29 @@ process FASTQC {
         """
     }
 }
-//
-// /*
-//  * STEP 2: Nanopore FastQ QC using NanoPlot
-//  */
-// process NANOPLOT {
-//     tag "$sample"
-//     label 'process_low'
-//     publishDir "${params.outdir}/nanoplot/${sample}", mode: params.publish_dir_mode
-//
-//     when:
-//     !params.skip_nanoplot && !params.skip_qc && long_reads
-//
-//     input:
-//     set val(sample), val(single_end), val(long_reads), file(reads) from ch_reads_nanoplot
-//
-//     output:
-//     file "*.{png,html,txt,log}"
-//
-//     script:
-//     """
-//     NanoPlot -t $task.cpus --fastq $reads
-//     """
-// }
+
+/*
+ * STEP 2: Nanopore FastQ QC using NanoPlot
+ */
+process NANOPLOT {
+    tag "$sample"
+    label 'process_low'
+    publishDir "${params.outdir}/nanoplot/${sample}", mode: params.publish_dir_mode
+
+    when:
+    !params.skip_nanoplot && !params.skip_qc && long_reads
+
+    input:
+    set val(sample), val(single_end), val(long_reads), file(reads) from ch_reads_nanoplot
+
+    output:
+    file "*.{png,html,txt,log}"
+
+    script:
+    """
+    NanoPlot -t $task.cpus --fastq $reads
+    """
+}
 
 
 
