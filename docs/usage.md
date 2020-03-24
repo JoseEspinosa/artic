@@ -116,117 +116,46 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 
 ### `--input`
 
-You will need to create a file with information about the samples in your experiment/run before executing the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 5 columns and a header row:
-
-| Column          | Description                                                                                                                |
-|-----------------|----------------------------------------------------------------------------------------------------------------------------|
-| `sample`        | Sample name without spaces.                                                                                                |
-| `fastq`         | Full path to FastQ file if previously demultiplexed. File has to be zipped and have the extension ".fastq.gz" or ".fq.gz". |
-| `barcode`       | Barcode identifier attributed to that sample during multiplexing. Must be an integer.                                      |
-
-#### Skip basecalling/demultiplexing
-
-As shown in the examples below, the accepted format of the file is slightly different if you would like to run the pipeline with or without basecalling/demultiplexing.
-
-##### With basecalling and demultiplexing
-
-###### Example `samplesheet.csv`
+You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 5 columns, and a header row as shown in the examples below.
 
 ```bash
-sample,fastq,barcode
-Sample1,,1
-Sample2,,2
-Sample3,,3
-Sample4,,4
-Sample5,,5
-Sample6,,6
+--input '[path to design file]'
 ```
 
-###### Example command
+#### Multiple runs of the same library
+
+The `sample` identifiers have to be the same when you have re-sequenced the same sample more than once (e.g. to increase sequencing depth). However, you must increment the `run` column appropriately. The first run value for any given sample must be 1. The pipeline will perform the analysis in parallel, and subsequently merge them when required. Below is an example where `SRR10948474` has been sequenced on multiple lanes on an Illumina machine in paired-end format as well as being sequenced twice on the Nanopore platform. In contrast, `SRR10948550` has only been sequenced twice on the Nanopore platform.
 
 ```bash
-nextflow run nf-core/nanoseq \
-    --input samplesheet.csv \
-    --protocol cDNA \
-    --input_path ./fast5/ \
-    --flowcell FLO-MIN106 \
-    --kit SQK-DCS109 \
-    --barcode_kit EXP-NBD103 \
-    -profile <docker/singularity/institute>
+sample,run,short_fastq_1,short_fastq_2,long_fastq
+SRR10948474,1,SRR10948474_S1_L002_R1_001.fastq.gz,SRR10948474_S1_L002_R2_001.fastq.gz,barcode01_RUN1.fastq.gz
+SRR10948474,2,SRR10948474_S1_L005_R1_001.fastq.gz,SRR10948474_S1_L005_R2_001.fastq.gz,barcode01_RUN2.fastq.gz
+SRR10948550,1,,,SRR10948550_RUN1.fastq.gz
+SRR10948550,2,,,SRR10948550_RUN2.fastq.gz
 ```
 
-##### With basecalling but not demultiplexing
+#### Full design
 
-###### Example `samplesheet.csv`
+A final design file may look something like the one below. `SRR10903401` was only sequenced once in Illumina PE format, `SRR10948474` was sequenced twice in Illumina PE format and on a MinION, `SRR10903402` was sequenced twice in Illumina SE format and `SRR10948550` was sequenced twice on a MinION.
 
 ```bash
-sample,fastq,barcode
-Sample1,,1
+sample,run,short_fastq_1,short_fastq_2,long_fastq
+SRR10903401,1,SRR10903401_S1_L003_R1_001.fastq.gz,SRR10903401_S1_L003_R2_001.fastq.gz,
+SRR10948474,1,SRR10948474_S1_L002_R1_001.fastq.gz,SRR10948474_S1_L002_R2_001.fastq.gz,barcode01_RUN1.fastq.gz
+SRR10948474,2,SRR10948474_S1_L005_R1_001.fastq.gz,SRR10948474_S1_L005_R2_001.fastq.gz,barcode01_RUN2.fastq.gz
+SRR10903402,1,SRR10903402_S1_L002_R1_001.fastq.gz,,
+SRR10903402,2,SRR10903402_S1_L005_R1_001.fastq.gz,,
+SRR10948550,1,,,SRR10948550_RUN1.fastq.gz
+SRR10948550,2,,,SRR10948550_RUN2.fastq.gz
 ```
 
-> Only a single sample can be specified if you would like to skip demultiplexing
-
-###### Example command
-
-```bash
-nextflow run nf-core/nanoseq \
-    --input samplesheet.csv \
-    --protocol cDNA \
-    --input_path ./fast5/ \
-    --flowcell FLO-MIN106 \
-    --kit SQK-DCS108 \
-    --skip_demultiplexing \
-    -profile <docker/singularity/institute>
-```
-
-##### With demultiplexing but not basecalling
-
-###### Example `samplesheet.csv`
-
-```bash
-sample,fastq,barcode
-Sample1,,1
-Sample2,,2
-Sample3,,3
-Sample4,,4
-Sample5,,5
-Sample6,,6
-```
-
-###### Example command
-
-```bash
-nextflow run nf-core/nanoseq \
-    --input samplesheet.csv \
-    --protocol DNA \
-    --input_path ./undemultiplexed.fastq.gz \
-    --barcode_kit 'NBD103/NBD104' \
-    --skip_basecalling \
-    -profile <docker/singularity/institute>
-```
-
-##### Without both basecalling and demultiplexing
-
-###### Example `samplesheet.csv`
-
-```bash
-sample,fastq,barcode
-Sample1,SAM101A1.fastq.gz,
-Sample2,SAM101A2.fastq.gz,
-Sample3,SAM101A3.fastq.gz,
-Sample4,SAM101A4.fastq.gz,
-```
-
-###### Example command
-
-```bash
-nextflow run nf-core/nanoseq \
-    --input samplesheet.csv \
-    --protocol cDNA \
-    --skip_basecalling \
-    --skip_demultiplexing \
-    -profile <docker/singularity/institute>
-```
+| Column          | Description                                                                                                               |
+|-----------------|---------------------------------------------------------------------------------------------------------------------------|
+| `sample`        | Sample identifier. This will be identical for multiple sequencing libraries/runs from the same sample.                    |
+| `run`           | Integer representing run number. Must start from `1..<number of runs>`.                                                   |
+| `short_fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz". |
+| `short_fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz". |
+| `long_fastq_2`  | Full path to FastQ file for Nanopore long reads. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".    |
 
 ## Alignment
 
