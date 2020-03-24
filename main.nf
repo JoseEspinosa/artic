@@ -135,13 +135,15 @@ process CHECK_SAMPLESHEET {
     tag "$samplesheet"
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode
 
+    cache false
+
     input:
     file samplesheet from ch_input
 
     output:
     file "*.csv" into ch_samplesheet_reformat
 
-    script:  // This script is bundled with the pipeline, in nf-core/covid19/bin/
+    script:  // This script is bundled with the pipeline, in nf-core/arctic/bin/
     """
     check_samplesheet.py $samplesheet samplesheet_reformat.csv
     """
@@ -272,9 +274,6 @@ process get_software_versions {
                       if (filename.indexOf(".csv") > 0) filename
                       else null
                 }
-
-    input:
-    file guppy from ch_guppy_version.collect().ifEmpty([])
 
     output:
     file 'software_versions_mqc.yaml' into ch_software_versions_yaml
