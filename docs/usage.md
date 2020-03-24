@@ -10,26 +10,8 @@
 * [Main arguments](#main-arguments)
   * [`-profile`](#-profile)
   * [`--input`](#--input)
-  * [`--protocol`](#--protocol)
-* [Basecalling and demultiplexing](#basecalling-and-demultiplexing)
-  * [`--input_path`](#--input_path)
-  * [`--flowcell`](#--flowcell)
-  * [`--kit`](#--kit)
-  * [`--barcode_kit`](#--barcode_kit)
-  * [`--guppy_config`](#--guppy_config)
-  * [`--guppy_model`](#--guppy_model)
-  * [`--guppy_gpu`](#--guppy_gpu)
-  * [`--guppy_gpu_runners`](#--guppy_gpu_runners)
-  * [`--guppy_cpu_threads`](#--guppy_cpu_threads)
-  * [`--gpu_device`](#--gpu_device)
-  * [`--gpu_cluster_options`](#--gpu_cluster_options)
-  * [`--qcat_min_score`](#--qcat_min_score)
-  * [`--qcat_detect_middle`](#--qcat_detect_middle)
-  * [`--skip_basecalling`](#--skip_basecalling)
-  * [`--skip_demultiplexing`](#--skip_demultiplexing)
 * [Alignments](#alignments)
   * [`--aligner`](#--aligner)
-  * [`--stranded`](#--stranded)
   * [`--save_align_intermeds`](#--save_align_intermeds)
 * [Skipping QC steps](#skipping-qc-steps)
 * [Job resources](#job-resources)
@@ -41,6 +23,7 @@
   * [`--awscli`](#--awscli)
 * [Other command line parameters](#other-command-line-parameters)
   * [`--outdir`](#--outdir)
+  * [`--publish_dir_mode`](#--publish_dir_mode)
   * [`--email`](#--email)
   * [`--email_on_fail`](#--email_on_fail)
   * [`--max_multiqc_email_size`](#--max_multiqc_email_size)
@@ -134,216 +117,48 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 
 ### `--input`
 
-You will need to create a file with information about the samples in your experiment/run before executing the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 5 columns and a header row:
-
-| Column          | Description                                                                                                                |
-|-----------------|----------------------------------------------------------------------------------------------------------------------------|
-| `sample`        | Sample name without spaces.                                                                                                |
-| `fastq`         | Full path to FastQ file if previously demultiplexed. File has to be zipped and have the extension ".fastq.gz" or ".fq.gz". |
-| `barcode`       | Barcode identifier attributed to that sample during multiplexing. Must be an integer.                                      |
-
-#### Skip basecalling/demultiplexing
-
-As shown in the examples below, the accepted format of the file is slightly different if you would like to run the pipeline with or without basecalling/demultiplexing.
-
-##### With basecalling and demultiplexing
-
-###### Example `samplesheet.csv`
+You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 5 columns, and a header row as shown in the examples below.
 
 ```bash
-sample,fastq,barcode
-Sample1,,1
-Sample2,,2
-Sample3,,3
-Sample4,,4
-Sample5,,5
-Sample6,,6
+--input '[path to design file]'
 ```
 
-###### Example command
+#### Multiple runs of the same library
+
+The `sample` identifiers have to be the same when you have re-sequenced the same sample more than once (e.g. to increase sequencing depth). However, you must increment the `run` column appropriately. The first run value for any given sample must be 1. The pipeline will perform the analysis in parallel, and subsequently merge them when required. Below is an example where `SRR10948474` has been sequenced on multiple lanes on an Illumina machine in paired-end format as well as being sequenced twice on the Nanopore platform. In contrast, `SRR10948550` has only been sequenced twice on the Nanopore platform.
 
 ```bash
-nextflow run nf-core/nanoseq \
-    --input samplesheet.csv \
-    --protocol cDNA \
-    --input_path ./fast5/ \
-    --flowcell FLO-MIN106 \
-    --kit SQK-DCS109 \
-    --barcode_kit EXP-NBD103 \
-    -profile <docker/singularity/institute>
+sample,run,short_fastq_1,short_fastq_2,long_fastq
+SRR10948474,1,SRR10948474_S1_L002_R1_001.fastq.gz,SRR10948474_S1_L002_R2_001.fastq.gz,barcode01_RUN1.fastq.gz
+SRR10948474,2,SRR10948474_S1_L005_R1_001.fastq.gz,SRR10948474_S1_L005_R2_001.fastq.gz,barcode01_RUN2.fastq.gz
+SRR10948550,1,,,SRR10948550_RUN1.fastq.gz
+SRR10948550,2,,,SRR10948550_RUN2.fastq.gz
 ```
 
-##### With basecalling but not demultiplexing
+#### Full design
 
-###### Example `samplesheet.csv`
+A final design file may look something like the one below. `SRR10903401` was only sequenced once in Illumina PE format, `SRR10948474` was sequenced twice in Illumina PE format and on a MinION, `SRR10903402` was sequenced twice in Illumina SE format and `SRR10948550` was sequenced twice on a MinION.
 
 ```bash
-sample,fastq,barcode
-Sample1,,1
+sample,run,short_fastq_1,short_fastq_2,long_fastq
+SRR10903401,1,SRR10903401_S1_L003_R1_001.fastq.gz,SRR10903401_S1_L003_R2_001.fastq.gz,
+SRR10948474,1,SRR10948474_S1_L002_R1_001.fastq.gz,SRR10948474_S1_L002_R2_001.fastq.gz,barcode01_RUN1.fastq.gz
+SRR10948474,2,SRR10948474_S1_L005_R1_001.fastq.gz,SRR10948474_S1_L005_R2_001.fastq.gz,barcode01_RUN2.fastq.gz
+SRR10903402,1,SRR10903402_S1_L002_R1_001.fastq.gz,,
+SRR10903402,2,SRR10903402_S1_L005_R1_001.fastq.gz,,
+SRR10948550,1,,,SRR10948550_RUN1.fastq.gz
+SRR10948550,2,,,SRR10948550_RUN2.fastq.gz
 ```
 
-> Only a single sample can be specified if you would like to skip demultiplexing
-
-###### Example command
-
-```bash
-nextflow run nf-core/nanoseq \
-    --input samplesheet.csv \
-    --protocol cDNA \
-    --input_path ./fast5/ \
-    --flowcell FLO-MIN106 \
-    --kit SQK-DCS108 \
-    --skip_demultiplexing \
-    -profile <docker/singularity/institute>
-```
-
-##### With demultiplexing but not basecalling
-
-###### Example `samplesheet.csv`
-
-```bash
-sample,fastq,barcode
-Sample1,,1
-Sample2,,2
-Sample3,,3
-Sample4,,4
-Sample5,,5
-Sample6,,6
-```
-
-###### Example command
-
-```bash
-nextflow run nf-core/nanoseq \
-    --input samplesheet.csv \
-    --protocol DNA \
-    --input_path ./undemultiplexed.fastq.gz \
-    --barcode_kit 'NBD103/NBD104' \
-    --skip_basecalling \
-    -profile <docker/singularity/institute>
-```
-
-##### Without both basecalling and demultiplexing
-
-###### Example `samplesheet.csv`
-
-```bash
-sample,fastq,barcode
-Sample1,SAM101A1.fastq.gz,
-Sample2,SAM101A2.fastq.gz,
-Sample3,SAM101A3.fastq.gz,
-Sample4,SAM101A4.fastq.gz,
-```
-
-###### Example command
-
-```bash
-nextflow run nf-core/nanoseq \
-    --input samplesheet.csv \
-    --protocol cDNA \
-    --skip_basecalling \
-    --skip_demultiplexing \
-    -profile <docker/singularity/institute>
-```
-
-### `--protocol`
-
-Specifies the type of data that was sequenced i.e. "DNA", "cDNA" or "directRNA".
-
-## Basecalling and demultiplexing
-
-### `--input_path`
-
-Path to Nanopore run directory (e.g. `fastq_pass/`) or a basecalled fastq file that requires demultiplexing. The latter can only be provided in conjunction with the `--skip_basecalling` parameter.
-
-### `--flowcell`
-
-Flowcell used to perform the sequencing e.g. "FLO-MIN106". Not required if `--guppy_config` is specified.
-
-### `--kit`
-
-Kit used to perform the sequencing e.g. "SQK-LSK109". Not required if `--guppy_config` is specified.
-
-### `--barcode_kit`
-
-Barcode kit used to perform the sequencing e.g. "SQK-PBK004".
-
-If you would like to skip the basecalling (`--skip_basecalling`) but still perform the demultiplexing please specify a barcode kit that can be recognised by [qcat](https://github.com/nanoporetech/qcat):
-
-| `qcat` barcode kit specifications | description                                                                   |
-|-----------------------------------|-------------------------------------------------------------------------------|
-| `Auto`                            | Auto detect barcoding kit                                                     |
-| `RBK001`                          | Rapid barcoding kit                                                           |
-| `RBK004`                          | Rapid barcoding kit v4                                                        |
-| `NBD103/NBD104`                   | Native barcoding kit with barcodes 1-12                                       |
-| `NBD114`                          | Native barcoding kit with barcodes 13-24                                      |
-| `NBD104/NBD114`                   | Native barcoding kit with barcodes 1-24                                       |
-| `PBC001`                          | PCR barcoding kits with 12 barcodes                                           |
-| `PBC096`                          | PCR barcoding kits with 96 barcodes                                           |
-| `RPB004/RLB001`                   | Rapid PCR Barcoding Kit (SQK-RPB004) and Rapid Low Input by PCR Barcoding Kit |
-| `RPB004/LWB001`                   | Low Input by PCR Barcoding Kit                                                |
-| `RAB204`                          | 16S Rapid Amplicon Barcoding Kit with 12 Barcodes                             |
-| `VMK001`                          | Voltrax Barcoding Kit with 4 barcodes                                         |
-
-### `--guppy_config`
-
-Config file used for basecalling that will be passed to Guppy via the "--config" parameter. Cannot be used in conjunction with `--flowcell` and `--kit`.
-This can be a local file (i.e. `/your/dir/guppy_conf.cfg`) or a string specifying a configuration stored in the `/opt/ont/guppy/data/` directory of Guppy.
-
-### `--guppy_model`
-
-Custom basecalling model file in `json` format that will be passed to Guppy via the "--model" parameter. Custom basecalling models can be trained with software such as [Taiyaki](https://github.com/nanoporetech/taiyaki). This can also be a string specifying a model stored in the `/opt/ont/guppy/data` directory of Guppy.
-
-### `--guppy_gpu`
-
-Whether to demultiplex with Guppy in GPU mode (default: false).
-
-### `--guppy_gpu_runners`
-
-Number of "--gpu_runners_per_device" used for Guppy when using `--guppy_gpu` (default: 6).
-
-### `--guppy_cpu_threads`
-
-Number of "--cpu_threads_per_caller" used for Guppy when using `--guppy_gpu` (default: 1).
-
-### `--gpu_device`
-
-Basecalling device specified to Guppy in GPU mode using "--device" (default: 'auto').
-
-### `--gpu_cluster_options`
-
-Cluster options required to use GPU resources (e.g. '--part=gpu --gres=gpu:1').
-
-### `--qcat_min_score`
-
-Specify the minimum quality score for qcat in the range 0-100 (default: 60).
-
-### `--qcat_detect_middle`
-
-Search for adapters in the whole read by applying the '--detect-middle' parameter in qcat (default: false).
-
-### `--skip_basecalling`
-
-Skip basecalling with Guppy.
-
-### `--skip_demultiplexing`
-
-Skip demultiplexing with Guppy/qcat.
+| Column          | Description                                                                                                               |
+|-----------------|---------------------------------------------------------------------------------------------------------------------------|
+| `sample`        | Sample identifier. This will be identical for multiple sequencing libraries/runs from the same sample.                    |
+| `run`           | Integer representing run number. Must start from `1..<number of runs>`.                                                   |
+| `short_fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz". |
+| `short_fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz". |
+| `long_fastq_2`  | Full path to FastQ file for Nanopore long reads. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".    |
 
 ## Alignment
-
-### `--stranded`
-
-Specifies if the data is strand-specific. Automatically activated when using `--protocol directRNA` (default: false).
-
-When using `--protocol`/`--stranded` the following command-line arguments will be set for `minimap2` and `graphmap2`:
-
-| `nanoseq` input              | `minimap2` presets  | `graphmap2` presets |
-|------------------------------|---------------------|--------------------|
-| `--protocol DNA`             | -ax map-ont         | no presets         |
-| `--protocol cDNA`            | -ax splice          | -x rnaseq          |
-| `--protocol directRNA`       | -ax splice -uf -k14 | -x rnaseq          |
-| `--protocol cDNA --stranded` | -ax splice -uf      | -x rnaseq          |
 
 ### `--aligner`
 
@@ -361,7 +176,6 @@ The following options make this easy:
 | Step                    | Description                          |
 |-------------------------|--------------------------------------|
 | `--skip_qc`             | Skip all QC steps apart from MultiQC |
-| `--skip_pycoqc`         | Skip pycoQC                          |
 | `--skip_nanoplot`       | Skip NanoPlot                        |
 | `--skip_fastqc`         | Skip FastQC                          |
 | `--skip_multiqc`        | Skip MultiQC                         |
@@ -405,6 +219,10 @@ Please make sure to also set the `-w/--work-dir` and `--outdir` parameters to a 
 ### `--outdir`
 
 The output directory where the results will be saved.
+
+### `--publish_dir_mode`
+
+Value passed to Nextflow [`publishDir`](https://www.nextflow.io/docs/latest/process.html#publishdir) directive for publishing results in the output directory. Available: 'symlink', 'rellink', 'link', 'copy', 'copyNoFollow' and 'move' (Default: 'copy').
 
 ### `--email`
 
