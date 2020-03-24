@@ -1,11 +1,11 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-                         nf-core/arctic
+                         nf-core/artic
 ========================================================================================
- nf-core/arctic Analysis Pipeline.
+ nf-core/artic Analysis Pipeline.
  #### Homepage / Documentation
- https://github.com/nf-core/arctic
+ https://github.com/nf-core/artic
 ----------------------------------------------------------------------------------------
 */
 
@@ -18,7 +18,7 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/arctic --input samplesheet.csv -profile docker
+    nextflow run nf-core/artic --input samplesheet.csv -profile docker
 
     Mandatory arguments:
       --input [file]                  Comma-separated file containing information about the samples in the experiment (see docs/usage.md)
@@ -143,7 +143,7 @@ process CHECK_SAMPLESHEET {
     output:
     file "*.csv" into ch_samplesheet_reformat
 
-    script:  // This script is bundled with the pipeline, in nf-core/arctic/bin/
+    script:  // This script is bundled with the pipeline, in nf-core/artic/bin/
     """
     check_samplesheet.py $samplesheet samplesheet_reformat.csv
     """
@@ -259,10 +259,10 @@ Channel.from(summary.collect{ [it.key, it.value] })
     .map { k,v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
     .reduce { a, b -> return [a, b].join("\n            ") }
     .map { x -> """
-    id: 'nf-core-arctic-summary'
+    id: 'nf-core-artic-summary'
     description: " - this information is collected when the pipeline is started."
-    section_name: 'nf-core/arctic Workflow Summary'
-    section_href: 'https://github.com/nf-core/arctic'
+    section_name: 'nf-core/artic Workflow Summary'
+    section_href: 'https://github.com/nf-core/artic'
     plot_type: 'html'
     data: |
         <dl class=\"dl-horizontal\">
@@ -356,9 +356,9 @@ process output_documentation {
 workflow.onComplete {
 
     // Set up the e-mail variables
-    def subject = "[nf-core/arctic] Successful: $workflow.runName"
+    def subject = "[nf-core/artic] Successful: $workflow.runName"
     if (!workflow.success) {
-        subject = "[nf-core/arctic] FAILED: $workflow.runName"
+        subject = "[nf-core/artic] FAILED: $workflow.runName"
     }
     def email_fields = [:]
     email_fields['version'] = workflow.manifest.version
@@ -390,12 +390,12 @@ workflow.onComplete {
         if (workflow.success) {
             mqc_report = ch_multiqc_report.getVal()
             if (mqc_report.getClass() == ArrayList) {
-                log.warn "[nf-core/arctic] Found multiple reports from process 'multiqc', will use only one"
+                log.warn "[nf-core/artic] Found multiple reports from process 'multiqc', will use only one"
                 mqc_report = mqc_report[0]
             }
         }
     } catch (all) {
-        log.warn "[nf-core/arctic] Could not attach MultiQC report to summary email"
+        log.warn "[nf-core/artic] Could not attach MultiQC report to summary email"
     }
 
     // Check if we are only sending emails on failure
@@ -427,11 +427,11 @@ workflow.onComplete {
             if (params.plaintext_email) { throw GroovyException('Send plaintext e-mail, not HTML') }
             // Try to send HTML e-mail using sendmail
             [ 'sendmail', '-t' ].execute() << sendmail_html
-            log.info "[nf-core/arctic] Sent summary e-mail to $email_address (sendmail)"
+            log.info "[nf-core/artic] Sent summary e-mail to $email_address (sendmail)"
         } catch (all) {
             // Catch failures and try with plaintext
             [ 'mail', '-s', subject, email_address ].execute() << email_txt
-            log.info "[nf-core/arctic] Sent summary e-mail to $email_address (mail)"
+            log.info "[nf-core/artic] Sent summary e-mail to $email_address (mail)"
         }
     }
 
@@ -457,10 +457,10 @@ workflow.onComplete {
     }
 
     if (workflow.success) {
-        log.info "-${c_purple}[nf-core/arctic]${c_green} Pipeline completed successfully${c_reset}-"
+        log.info "-${c_purple}[nf-core/artic]${c_green} Pipeline completed successfully${c_reset}-"
     } else {
         checkHostname()
-        log.info "-${c_purple}[nf-core/arctic]${c_red} Pipeline completed with errors${c_reset}-"
+        log.info "-${c_purple}[nf-core/artic]${c_red} Pipeline completed with errors${c_reset}-"
     }
 
 }
@@ -484,7 +484,7 @@ def nfcoreHeader() {
     ${c_blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${c_yellow}}  {${c_reset}
     ${c_blue}  | \\| |       \\__, \\__/ |  \\ |___     ${c_green}\\`-._,-`-,${c_reset}
                                             ${c_green}`._,._,\'${c_reset}
-    ${c_purple}  nf-core/arctic v${workflow.manifest.version}${c_reset}
+    ${c_purple}  nf-core/artic v${workflow.manifest.version}${c_reset}
     -${c_dim}--------------------------------------------------${c_reset}-
     """.stripIndent()
 }

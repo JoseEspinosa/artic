@@ -5,7 +5,7 @@ import re
 
 # TODO nf-core: Add additional regexes for new tools in process get_software_versions
 regexes = {
-    'nf-core/arctic': ['v_pipeline.txt', r"(\S+)"],
+    'nf-core/artic': ['v_pipeline.txt', r"(\S+)"],
     'Nextflow': ['v_nextflow.txt', r"(\S+)"],
     'FastQC': ['v_fastqc.txt', r"FastQC v(\S+)"],
     'NanoPlot': ['v_nanoplot.txt', r"NanoPlot (\S+)"],
@@ -17,7 +17,7 @@ regexes = {
 }
 
 results = OrderedDict()
-results['nf-core/arctic'] = '<span style="color:#999999;\">N/A</span>'
+results['nf-core/artic'] = '<span style="color:#999999;\">N/A</span>'
 results['Nextflow'] = '<span style="color:#999999;\">N/A</span>'
 results['FastQC'] = '<span style="color:#999999;\">N/A</span>'
 results['NanoPlot'] = '<span style="color:#999999;\">N/A</span>'
@@ -46,8 +46,8 @@ for k in list(results):
 # Dump to YAML
 print ('''
 id: 'software_versions'
-section_name: 'nf-core/arctic Software Versions'
-section_href: 'https://github.com/nf-core/arctic'
+section_name: 'nf-core/artic Software Versions'
+section_href: 'https://github.com/nf-core/artic'
 plot_type: 'html'
 description: 'are collected at run time from the software output.'
 data: |
