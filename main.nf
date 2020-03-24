@@ -172,8 +172,8 @@ def validate_input(LinkedHashMap sample) {
 ch_samplesheet_reformat
     .splitCsv(header:true, sep:',')
     .map { validate_input(it) }
-    .into { ch_reads_nanoplot;
-            ch_reads_fastqc;
+    .into { ch_reads_fastqc;
+            ch_reads_nanoplot;
             ch_reads_align }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -184,42 +184,42 @@ ch_samplesheet_reformat
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// /*
-//  * STEP 1: Illumina and Nanopore FastQC
-//  */
-// process FASTQC {
-//     tag "$sample"
-//     label 'process_medium'
-//     publishDir "${params.outdir}/fastqc", mode: params.publish_dir_mode,
-//         saveAs: { filename ->
-//                       filename.endsWith(".zip") ? "zips/$filename" : "$filename"
-//                 }
-//
-//     when:
-//     !params.skip_fastqc && !params.skip_qc
-//
-//     input:
-//     set val(sample), val(single_end), val(long_reads), file(reads) from ch_reads_fastqc
-//
-//     output:
-//     file "*.{zip,html}" into ch_fastqc_reports_mqc
-//
-//     script:
-//     // Added soft-links to original fastqs for consistent naming in MultiQC
-//     if (single_end || long_reads) {
-//         """
-//         [ ! -f  ${sample}.fastq.gz ] && ln -s $reads ${sample}.fastq.gz
-//         fastqc -q -t $task.cpus ${sample}.fastq.gz
-//         """
-//     } else {
-//         """
-//         [ ! -f  ${sample}_1.fastq.gz ] && ln -s ${reads[0]} ${sample}_1.fastq.gz
-//         [ ! -f  ${sample}_2.fastq.gz ] && ln -s ${reads[1]} ${sample}_2.fastq.gz
-//         fastqc -q -t $task.cpus ${sample}_1.fastq.gz
-//         fastqc -q -t $task.cpus ${sample}_2.fastq.gz
-//         """
-//     }
-// }
+/*
+ * STEP 1: Illumina and Nanopore FastQC
+ */
+process FASTQC {
+    tag "$sample"
+    label 'process_medium'
+    publishDir "${params.outdir}/fastqc", mode: params.publish_dir_mode,
+        saveAs: { filename ->
+                      filename.endsWith(".zip") ? "zips/$filename" : "$filename"
+                }
+
+    when:
+    !params.skip_fastqc && !params.skip_qc
+
+    input:
+    set val(sample), val(single_end), val(long_reads), file(reads) from ch_reads_fastqc
+
+    output:
+    file "*.{zip,html}" into ch_fastqc_reports_mqc
+
+    script:
+    // Added soft-links to original fastqs for consistent naming in MultiQC
+    if (single_end || long_reads) {
+        """
+        [ ! -f  ${sample}.fastq.gz ] && ln -s $reads ${sample}.fastq.gz
+        fastqc -q -t $task.cpus ${sample}.fastq.gz
+        """
+    } else {
+        """
+        [ ! -f  ${sample}_1.fastq.gz ] && ln -s ${reads[0]} ${sample}_1.fastq.gz
+        [ ! -f  ${sample}_2.fastq.gz ] && ln -s ${reads[1]} ${sample}_2.fastq.gz
+        fastqc -q -t $task.cpus ${sample}_1.fastq.gz
+        fastqc -q -t $task.cpus ${sample}_2.fastq.gz
+        """
+    }
+}
 //
 // /*
 //  * STEP 2: Nanopore FastQ QC using NanoPlot
