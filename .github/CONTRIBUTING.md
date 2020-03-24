@@ -1,23 +1,23 @@
-# nf-core/arctic: Contributing Guidelines
+# nf-core/artic: Contributing Guidelines
 
 Hi there!
-Many thanks for taking an interest in improving nf-core/arctic.
+Many thanks for taking an interest in improving nf-core/artic.
 
-We try to manage the required tasks for nf-core/arctic using GitHub issues, you probably came to this page when creating one.
+We try to manage the required tasks for nf-core/artic using GitHub issues, you probably came to this page when creating one.
 Please use the pre-filled template to save time.
 
 However, don't be put off by this template - other more general issues and suggestions are welcome!
 Contributions to the code are even more welcome ;)
 
-> If you need help using or modifying nf-core/arctic then the best place to ask is on the nf-core Slack [#arctic](https://nfcore.slack.com/channels/arctic) channel ([join our Slack here](https://nf-co.re/join/slack)).
+> If you need help using or modifying nf-core/artic then the best place to ask is on the nf-core Slack [#artic](https://nfcore.slack.com/channels/artic) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 ## Contribution workflow
 
-If you'd like to write some code for nf-core/arctic, the standard workflow is as follows:
+If you'd like to write some code for nf-core/artic, the standard workflow is as follows:
 
-1. Check that there isn't already an issue about your idea in the [nf-core/arctic issues](https://github.com/nf-core/arctic/issues) to avoid duplicating work
+1. Check that there isn't already an issue about your idea in the [nf-core/artic issues](https://github.com/nf-core/artic/issues) to avoid duplicating work
     * If there isn't one already, please create one so that others know you're working on this
-2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [nf-core/arctic repository](https://github.com/nf-core/arctic) to your GitHub account
+2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [nf-core/artic repository](https://github.com/nf-core/artic) to your GitHub account
 3. Make the necessary changes / additions within your forked repository
 4. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged
 
@@ -54,4 +54,4 @@ These tests are run both with the latest available version of `Nextflow` and als
 
 ## Getting help
 
-For further information/help, please consult the [nf-core/arctic documentation](https://nf-co.re/nf-core/arctic/docs) and don't hesitate to get in touch on the nf-core Slack [#arctic](https://nfcore.slack.com/channels/arctic) channel ([join our Slack here](https://nf-co.re/join/slack)).
+For further information/help, please consult the [nf-core/artic documentation](https://nf-co.re/nf-core/artic/docs) and don't hesitate to get in touch on the nf-core Slack [#artic](https://nfcore.slack.com/channels/artic) channel ([join our Slack here](https://nf-co.re/join/slack)).
