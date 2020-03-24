@@ -18,45 +18,19 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/arctic \
-        --input samplesheet.csv \
-        --protocol DNA \
-        --input_path ./fast5/ \
-        --flowcell FLO-MIN106 \
-        --kit SQK-LSK109 \
-        --barcode_kit SQK-PBK004 \
-        -profile docker
+    nextflow run nf-core/arctic --input samplesheet.csv -profile docker
 
     Mandatory arguments:
       --input [file]                  Comma-separated file containing information about the samples in the experiment (see docs/usage.md)
-      --protocol [str]                Specifies the type of sequencing i.e. "DNA", "cDNA" or "directRNA"
       -profile [str]                  Configuration profile to use. Can use multiple (comma separated)
                                       Available: docker, singularity, test, awsbatch, <institute> and more
-    Basecalling/Demultiplexing
-      --input_path [file]             Path to Nanopore run directory (e.g. fastq_pass/) or a basecalled fastq file that requires demultiplexing
-      --flowcell [str]                Flowcell used to perform the sequencing e.g. FLO-MIN106. Not required if '--guppy_config' is specified
-      --kit [str]                     Kit used to perform the sequencing e.g. SQK-LSK109. Not required if '--guppy_config' is specified
-      --barcode_kit [str]             Barcode kit used to perform the sequencing e.g. SQK-PBK004
-      --guppy_config [file/str]       Guppy config file used for basecalling. Cannot be used in conjunction with '--flowcell' and '--kit'
-      --guppy_model [file/str]        Custom basecalling model file (JSON) to use for Guppy basecalling, such as the output from Taiyaki (Default: false)
-      --guppy_gpu [bool]              Whether to perform basecalling with Guppy in GPU mode (Default: false)
-      --guppy_gpu_runners [int]       Number of '--gpu_runners_per_device' used for Guppy when using '--guppy_gpu' (Default: 6)
-      --guppy_cpu_threads [int]       Number of '--cpu_threads_per_caller' used for Guppy when using '--guppy_gpu' (Default: 1)
-      --gpu_device [str]              Basecalling device specified to Guppy in GPU mode using '--device' (Default: 'auto')
-      --gpu_cluster_options [str]     Cluster options required to use GPU resources (e.g. '--part=gpu --gres=gpu:1')
-      --qcat_min_score [int]          Minimum scores of '--min-score' used for qcat (Default: 60)
-      --qcat_detect_middle [bool]     Search for adapters in the whole read '--detect-middle' used for qcat (Default: false)
-      --skip_basecalling [bool]       Skip basecalling with Guppy (Default: false)
-      --skip_demultiplexing [bool]    Skip demultiplexing with Guppy (Default: false)
 
     Alignment
-      --aligner [str]                 Specifies the aligner to use (available are: minimap2 or graphmap2). Both are capable of performing unspliced/spliced alignment (Default: 'minimap2')
-      --stranded [bool]               Specifies if the data is strand-specific. Automatically activated when using '--protocol directRNA' (Default: false)
+      --aligner [str]                 Specifies the aligner to use (available are: bwa or minimap2). (Default: 'bwa')
       --save_align_intermeds [bool]   Save the '.sam' files from the alignment step (Default: false)
 
     QC
       --skip_qc [bool]                Skip all QC steps apart from MultiQC (Default: false)
-      --skip_pycoqc [bool]            Skip pycoQC (Default: false)
       --skip_nanoplot [bool]          Skip NanoPlot (Default: false)
       --skip_fastqc [bool]            Skip FastQC (Default: false)
       --skip_multiqc [bool]           Skip MultiQC (Default: false)
@@ -86,73 +60,8 @@ if (params.help) {
  */
 if (params.input) { ch_input = file(params.input, checkIfExists: true) } else { exit 1, "Samplesheet file not specified!" }
 
-// Function to check if running offline
-def isOffline() {
-    try {
-        return NXF_OFFLINE as Boolean
-    }
-    catch( Exception e ) {
-        return false
-    }
-}
-
-def ch_guppy_model = Channel.empty()
-def ch_guppy_config = Channel.empty()
-if (!params.skip_basecalling) {
-
-    // Pre-download test-dataset to get files for '--input_path' parameter
-    // Nextflow is unable to recursively download directories via HTTPS
-    if (workflow.profile.contains('test')) {
-        if (!isOffline()) {
-            process GetTestData {
-
-                output:
-                file "test-datasets/fast5/$barcoded/" into ch_input_path
-
-                script:
-                barcoded = workflow.profile.contains('test_nonbc') ? "nonbarcoded" : "barcoded"
-                """
-                git clone https://github.com/nf-core/test-datasets.git --branch nanoseq --single-branch
-                """
-            }
-        } else {
-            exit 1, "NXF_OFFLINE=true or -offline has been set so cannot download and run any test dataset!"
-        }
-    } else {
-        if (params.input_path) { ch_input_path = Channel.fromPath(params.input_path, checkIfExists: true) } else { exit 1, "Please specify a valid run directory to perform basecalling!" }
-    }
-
-    // Need to stage guppy_config properly depending on whether its a file or string
-    if (!params.guppy_config) {
-        if (!params.flowcell) { exit 1, "Please specify a valid flowcell identifier for basecalling!" }
-        if (!params.kit)      { exit 1, "Please specify a valid kit identifier for basecalling!" }
-    } else if (file(params.guppy_config).exists()) {
-        ch_guppy_config = Channel.fromPath(params.guppy_config)
-    }
-
-    // Need to stage guppy_model properly depending on whether its a file or string
-    if (params.guppy_model) {
-        if (file(params.guppy_model).exists()) {
-            ch_guppy_model = Channel.fromPath(params.guppy_model)
-        }
-    }
-
-} else {
-    if (!params.skip_demultiplexing) {
-        if (!params.barcode_kit) {
-            params.barcode_kit = 'Auto'
-        }
-
-        def qcatBarcodeKitList = ['Auto', 'RBK001', 'RBK004', 'NBD103/NBD104',
-                                  'NBD114', 'NBD104/NBD114', 'PBC001', 'PBC096',
-                                  'RPB004/RLB001', 'PBK004/LWB001', 'RAB204', 'VMK001', 'DUAL']
-
-        if (params.barcode_kit && qcatBarcodeKitList.contains(params.barcode_kit)) {
-            if (params.input_path) { ch_input_path = Channel.fromPath(params.input_path, checkIfExists: true) } else { exit 1, "Please specify a valid input fastq file to perform demultiplexing!" }
-        } else {
-            exit 1, "Please provide a barcode kit to demultiplex with qcat. Valid options: ${qcatBarcodeKitList}"
-        }
-    }
+if (params.aligner != 'bwa' && params.aligner != 'minimap2') {
+    exit 1, "Invalid aligner option: ${params.aligner}. Valid options: 'bwa', 'minimap2'"
 }
 
 // Has the run name been specified by the user?
@@ -177,7 +86,6 @@ ch_multiqc_config = file("$baseDir/assets/multiqc_config.yaml", checkIfExists: t
 ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
 ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 
-
 // Header log info
 log.info nfcoreHeader()
 def summary = [:]
@@ -185,33 +93,9 @@ if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
 // TODO nf-core: Report custom parameters here
 summary['Samplesheet']            = params.input
-summary['Protocol']               = params.protocol
-summary['Stranded']               = (params.stranded || params.protocol == 'directRNA') ? 'Yes' : 'No'
-summary['Skip Basecalling']       = params.skip_basecalling ? 'Yes' : 'No'
-summary['Skip Demultiplexing']    = params.skip_demultiplexing ? 'Yes' : 'No'
-if (!params.skip_basecalling) {
-    summary['Run Dir']            = params.input_path
-    summary['Flowcell ID']        = params.flowcell ?: 'Not required'
-    summary['Kit ID']             = params.kit ?: 'Not required'
-    summary['Barcode Kit ID']     = params.barcode_kit ?: 'Unspecified'
-    summary['Guppy Config File']  = params.guppy_config ?: 'Unspecified'
-    summary['Guppy Model File']   = params.guppy_model ?:'Unspecified'
-    summary['Guppy GPU Mode']     = params.guppy_gpu ? 'Yes' : 'No'
-    summary['Guppy GPU Runners']  = params.guppy_gpu_runners
-    summary['Guppy CPU Threads']  = params.guppy_cpu_threads
-    summary['Guppy GPU Device']   = params.gpu_device ?: 'Unspecified'
-    summary['Guppy GPU Options']  = params.gpu_cluster_options ?: 'Unspecified'
-}
-if (params.skip_basecalling && !params.skip_demultiplexing) {
-    summary['Input FastQ File']   = params.input_path
-    summary['Barcode Kit ID']     = params.barcode_kit ?: 'Unspecified'
-    summary['Qcat Min Score']     = params.qcat_min_score
-    summary['Qcat Detect Middle'] = params.qcat_detect_middle ? 'Yes': 'No'
-}
 summary['Aligner']                = params.aligner
 summary['Save Intermeds']         = params.save_align_intermeds ? 'Yes' : 'No'
 if (params.skip_qc)        summary['Skip QC']        = 'Yes'
-if (params.skip_pycoqc)    summary['Skip PycoQC']    = 'Yes'
 if (params.skip_nanoplot)  summary['Skip NanoPlot']  = 'Yes'
 if (params.skip_fastqc)    summary['Skip FastQC']    = 'Yes'
 if (params.skip_multiqc)   summary['Skip MultiQC']   = 'Yes'
@@ -261,208 +145,7 @@ checkHostname()
 //     """
 // }
 //
-// // Function to resolve fasta and gtf file if using iGenomes
-// // Returns [ sample, fastq, barcode, fasta, gtf, is_transcripts, annotation_str ]
-// def get_sample_info(LinkedHashMap sample, LinkedHashMap genomeMap) {
-//
-//     // Resolve fasta and gtf file if using iGenomes
-//     def fasta = false
-//     def gtf = false
-//     if (sample.genome) {
-//         if (genomeMap.containsKey(sample.genome)) {
-//             fasta = file(genomeMap[sample.genome].fasta, checkIfExists: true)
-//             gtf = file(genomeMap[sample.genome].gtf, checkIfExists: true)
-//         } else {
-//             fasta = file(sample.genome, checkIfExists: true)
-//         }
-//     }
-//
-//     // Check if fastq and gtf file exists
-//     fastq = sample.fastq ? file(sample.fastq, checkIfExists: true) : null
-//     gtf = sample.gtf ? file(sample.gtf, checkIfExists: true) : gtf
-//
-//     return [ sample.sample, fastq, sample.barcode, fasta, gtf, sample.is_transcripts.toBoolean(), fasta.toString()+';'+gtf.toString() ]
-// }
-//
-// // Create channels = [ sample, barcode, fasta, gtf, is_transcripts, annotation_str ]
-// ch_samplesheet_reformat
-//     .splitCsv(header:true, sep:',')
-//     .map { get_sample_info(it, params.genomes) }
-//     .map { it -> [ it[0], it[2], it[3], it[4], it[5], it[6] ] }
-//     .into { ch_sample_info;
-//             ch_sample_name }
-//
-// if (!params.skip_basecalling) {
-//
-//     // Get sample name for single sample when --skip_demultiplexing
-//     ch_sample_name
-//         .first()
-//         .map { it[0] }
-//         .set { ch_sample_name }
-//
-//     /*
-//      * STEP 1 - Basecalling and demultipexing using Guppy
-//      */
-//     process Guppy {
-//         tag "$input_path"
-//         label 'process_high'
-//         publishDir path: "${params.outdir}/guppy", mode: 'copy',
-//             saveAs: { filename ->
-//                           if (!filename.endsWith("guppy.txt")) filename
-//                     }
-//
-//         input:
-//         file input_path from ch_input_path
-//         val name from ch_sample_name
-//         file guppy_config from ch_guppy_config.ifEmpty([])
-//         file guppy_model from ch_guppy_model.ifEmpty([])
-//
-//         output:
-//         file "fastq/*.fastq.gz" into ch_fastq
-//         file "basecalling/*.txt" into ch_guppy_pycoqc_summary,
-//                                       ch_guppy_nanoplot_summary
-//         file "basecalling/*"
-//         file "v_guppy.txt" into ch_guppy_version
-//
-//         script:
-//         barcode_kit = params.barcode_kit ? "--barcode_kits $params.barcode_kit" : ""
-//         proc_options = params.guppy_gpu ? "--device $params.gpu_device --num_callers $task.cpus --cpu_threads_per_caller $params.guppy_cpu_threads --gpu_runners_per_device $params.guppy_gpu_runners" : "--num_callers 2 --cpu_threads_per_caller ${task.cpus/2}"
-//         def config = "--flowcell $params.flowcell --kit $params.kit"
-//         if (params.guppy_config) config = file(params.guppy_config).exists() ? "--config ./$guppy_config" : "--config $params.guppy_config"
-//         def model = ""
-//         if (params.guppy_model) model = file(params.guppy_model).exists() ? "--model ./$guppy_model" : "--model $params.guppy_model"
-//         """
-//         guppy_basecaller \\
-//             --input_path $input_path \\
-//             --save_path ./basecalling \\
-//             --records_per_fastq 0 \\
-//             --compress_fastq \\
-//             $barcode_kit \\
-//             $proc_options \\
-//             $config \\
-//             $model
-//         guppy_basecaller --version &> v_guppy.txt
-//         ## Concatenate fastq files
-//         mkdir fastq
-//         cd basecalling
-//         if [ "\$(find . -type d -name "barcode*" )" != "" ]
-//         then
-//             for dir in barcode*/
-//             do
-//                 dir=\${dir%*/}
-//                 cat \$dir/*.fastq.gz > ../fastq/\$dir.fastq.gz
-//             done
-//         else
-//             cat *.fastq.gz > ../fastq/${name}.fastq.gz
-//         fi
-//         """
-//     }
-//
-//     // Create channels = [ sample, fastq, fasta, gtf, is_transcripts, annotation_str ]
-//     ch_fastq
-//         .flatten()
-//         .map { it -> [ it, it.baseName.substring(0,it.baseName.lastIndexOf('.')) ] } // [barcode001.fastq, barcode001]
-//         .join(ch_sample_info, by: 1) // join on barcode
-//         .map { it -> [ it[2], it[1], it[3], it[4], it[5], it[6] ] }
-//         .into { ch_fastq_nanoplot;
-//                 ch_fastq_fastqc;
-//                 ch_fastq_sizes;
-//                 ch_fastq_gtf;
-//                 ch_fastq_index;
-//                 ch_fastq_align }
-//
-// } else {
-//     if (!params.skip_demultiplexing) {
-//
-//         /*
-//          * STEP 1 - Demultipexing using qcat
-//          */
-//         process Qcat {
-//             tag "$input_path"
-//             label 'process_medium'
-//             publishDir path: "${params.outdir}/qcat", mode: 'copy'
-//
-//             input:
-//             file input_path from ch_input_path
-//
-//             output:
-//             file "fastq/*.fastq.gz" into ch_fastq
-//
-//             script:
-//             detect_middle = params.qcat_detect_middle ? "--detect-middle $params.qcat_detect_middle" : ""
-//             """
-//             ## Unzip fastq file
-//             ## qcat doesnt support zipped files yet
-//             FILE=$input_path
-//             if [[ \$FILE == *.gz ]]
-//             then
-//                 zcat $input_path > unzipped.fastq
-//                 FILE=unzipped.fastq
-//             fi
-//             qcat  \\
-//                 -f \$FILE \\
-//                 -b ./fastq \\
-//                 --kit $params.barcode_kit \\
-//                 --min-score $params.qcat_min_score \\
-//                 $detect_middle
-//             ## Zip fastq files
-//             pigz -p $task.cpus fastq/*
-//             """
-//         }
-//
-//         // Create channels = [ sample, fastq, fasta, gtf, is_transcripts, annotation_str ]
-//         ch_fastq
-//             .flatten()
-//             .map { it -> [ it, it.baseName.substring(0,it.baseName.lastIndexOf('.'))] } // [barcode001.fastq, barcode001]
-//             .join(ch_sample_info, by: 1) // join on barcode
-//             .map { it -> [ it[2], it[1], it[3], it[4], it[5], it[6] ] }
-//             .into { ch_fastq_nanoplot;
-//                     ch_fastq_fastqc;
-//                     ch_fastq_sizes;
-//                     ch_fastq_gtf;
-//                     ch_fastq_index;
-//                     ch_fastq_align }
-//     } else {
-//         // Create channels = [ sample, fastq, fasta, gtf, is_transcripts, annotation_str ]
-//         ch_samplesheet_reformat
-//             .splitCsv(header:true, sep:',')
-//             .map { get_sample_info(it, params.genomes) }
-//             .map { it -> [ it[0], it[1], it[3], it[4], it[5], it[6] ] }
-//             .into { ch_fastq_nanoplot;
-//                     ch_fastq_fastqc;
-//                     ch_fastq_sizes;
-//                     ch_fastq_gtf;
-//                     ch_fastq_index;
-//                     ch_fastq_align }
-//     }
-//     ch_guppy_version = Channel.empty()
-//     ch_guppy_pycoqc_summary = Channel.empty()
-//     ch_guppy_nanoplot_summary = Channel.empty()
-// }
-//
-// /*
-//  * STEP 2 - QC using PycoQC
-//  */
-// process PycoQC {
-//     tag "$summary_txt"
-//     label 'process_low'
-//     publishDir "${params.outdir}/pycoqc", mode: 'copy'
-//
-//     when:
-//     !params.skip_basecalling && !params.skip_qc && !params.skip_pycoqc
-//
-//     input:
-//     file summary_txt from ch_guppy_pycoqc_summary
-//
-//     output:
-//     file "*.html"
-//
-//     script:
-//     """
-//     pycoQC -f $summary_txt -o pycoQC_output.html
-//     """
-// }
-//
+
 // /*
 //  * STEP 3 - QC using NanoPlot
 //  */
@@ -571,12 +254,9 @@ process get_software_versions {
     """
     echo $workflow.manifest.version > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
-    qcat --version &> v_qcat.txt
     NanoPlot --version &> v_nanoplot.txt
-    pycoQC --version &> v_pycoqc.txt
     fastqc --version > v_fastqc.txt
     minimap2 --version &> v_minimap2.txt
-    echo \$(graphmap2 2>&1) > v_graphmap2.txt
     samtools --version > v_samtools.txt
     bedtools --version > v_bedtools.txt
     multiqc --version > v_multiqc.txt
