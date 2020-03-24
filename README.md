@@ -64,6 +64,7 @@ The nf-core/arctic pipeline comes with documentation about the pipeline, found i
 | [Harshil Patel](https://github.com/drpatelh)              | [The Francis Crick Institute, UK](https://www.crick.ac.uk/)                           |
 | [Matt Bull](https://github.com/m-bull)                    | [Public Health Wales, UK](https://phw.nhs.wales/)                                     |
 | [Maxime Garcia](https://github.com/MaxUlysse)             | [SciLifeLab, Sweden](https://www.scilifelab.se/)                                      |
+| [Michael Heuer](https://github.com/heuermh)               | [UC Berkeley, USA](https://https://rise.cs.berkeley.edu)                              |
 | [Nick Loman](https://github.com/nickloman)                | [University of Birmingham, UK](https://www.birmingham.ac.uk)                          |
 | [Olga Botvinnik](https://github.com/olgabot)              | [Chan Zuckerberg Biohub, USA](https://www.czbiohub.org/)                              |
 | [Phil Ewels](https://github.com/ewels)                    | [SciLifeLab, Sweden](https://www.scilifelab.se/)                                      |
