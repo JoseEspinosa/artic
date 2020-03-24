@@ -126,95 +126,125 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
 // Check the hostnames against configured profiles
 checkHostname()
 
-// /*
-//  * PREPROCESSING - CHECK SAMPLESHEET
-//  */
-// process CheckSampleSheet {
-//     tag "$samplesheet"
-//     publishDir "${params.outdir}/pipeline_info", mode: 'copy'
-//
-//     input:
-//     file samplesheet from ch_input
-//
-//     output:
-//     file "*.csv" into ch_samplesheet_reformat
-//
-//     script:  // This script is bundled with the pipeline, in nf-core/nanoseq/bin/
-//     """
-//     check_samplesheet.py $samplesheet samplesheet_reformat.csv
-//     """
-// }
-//
+
+/*
+ * PREPROCESSING: Reformat samplesheet and check validitiy
+ */
+process CHECK_SAMPLESHEET {
+    tag "$samplesheet"
+    publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode
+
+    input:
+    file samplesheet from ch_input
+
+    output:
+    file "*.csv" into ch_samplesheet_reformat
+
+    script:  // This script is bundled with the pipeline, in nf-core/covid19/bin/
+    """
+    check_samplesheet.py $samplesheet samplesheet_reformat.csv
+    """
+}
+
+// Function to get list of [ sample, single_end?, long_reads?, [ fastq_1, fastq_2 ] ]
+def validate_input(LinkedHashMap sample) {
+    def sample_id = sample.sample_id
+    def single_end = sample.single_end.toBoolean()
+    def long_reads = sample.long_reads.toBoolean()
+    def fastq_1 = sample.fastq_1
+    def fastq_2 = sample.fastq_2
+
+    def array = []
+    if (single_end || long_reads) {
+        array = [ sample_id, single_end, long_reads, [ file(fastq_1, checkIfExists: true) ] ]
+    } else {
+        array = [ sample_id, single_end, long_reads, [ file(fastq_1, checkIfExists: true), file(fastq_2, checkIfExists: true) ] ]
+    }
+    return array
+}
+
+/*
+ * Create channels for input fastq files
+ */
+ch_samplesheet_reformat
+    .splitCsv(header:true, sep:',')
+    .map { validate_input(it) }
+    .into { ch_reads_nanoplot;
+            ch_reads_fastqc;
+            ch_reads_align }
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/* --                                                                     -- */
+/* --                        FASTQ QC                                     -- */
+/* --                                                                     -- */
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 // /*
-//  * STEP 3 - QC using NanoPlot
+//  * STEP 1: Illumina and Nanopore FastQC
 //  */
-// process NanoPlotSummary {
-//     tag "$summary_txt"
-//     label 'process_low'
-//     publishDir "${params.outdir}/nanoplot/summary", mode: 'copy'
-//
-//     when:
-//     !params.skip_basecalling && !params.skip_qc && !params.skip_nanoplot
-//
-//     input:
-//     file summary_txt from ch_guppy_nanoplot_summary
-//
-//     output:
-//     file "*.{png,html,txt,log}"
-//
-//     script:
-//     """
-//     NanoPlot -t $task.cpus --summary $summary_txt
-//     """
-// }
-//
-// /*
-//  * STEP 4 - FastQ QC using NanoPlot
-//  */
-// process NanoPlotFastQ {
-//     tag "$sample"
-//     label 'process_low'
-//     publishDir "${params.outdir}/nanoplot/fastq/${sample}", mode: 'copy'
-//
-//     when:
-//     !params.skip_qc && !params.skip_nanoplot
-//
-//     input:
-//     set val(sample), file(fastq) from ch_fastq_nanoplot.map { ch -> [ ch[0], ch[1] ] }
-//
-//     output:
-//     file "*.{png,html,txt,log}"
-//
-//     script:
-//     """
-//     NanoPlot -t $task.cpus --fastq $fastq
-//     """
-// }
-//
-// /*
-//  * STEP 5 - FastQ QC using FastQC
-//  */
-// process FastQC {
+// process FASTQC {
 //     tag "$sample"
 //     label 'process_medium'
-//     publishDir "${params.outdir}/fastqc", mode: 'copy'
+//     publishDir "${params.outdir}/fastqc", mode: params.publish_dir_mode,
+//         saveAs: { filename ->
+//                       filename.endsWith(".zip") ? "zips/$filename" : "$filename"
+//                 }
 //
 //     when:
-//     !params.skip_qc && !params.skip_fastqc
+//     !params.skip_fastqc && !params.skip_qc
 //
 //     input:
-//     set val(sample), file(fastq) from ch_fastq_fastqc.map { ch -> [ ch[0], ch[1] ] }
+//     set val(sample), val(single_end), val(long_reads), file(reads) from ch_reads_fastqc
 //
 //     output:
-//     file "*.{zip,html}" into ch_fastqc_mqc
+//     file "*.{zip,html}" into ch_fastqc_reports_mqc
+//
+//     script:
+//     // Added soft-links to original fastqs for consistent naming in MultiQC
+//     if (single_end || long_reads) {
+//         """
+//         [ ! -f  ${sample}.fastq.gz ] && ln -s $reads ${sample}.fastq.gz
+//         fastqc -q -t $task.cpus ${sample}.fastq.gz
+//         """
+//     } else {
+//         """
+//         [ ! -f  ${sample}_1.fastq.gz ] && ln -s ${reads[0]} ${sample}_1.fastq.gz
+//         [ ! -f  ${sample}_2.fastq.gz ] && ln -s ${reads[1]} ${sample}_2.fastq.gz
+//         fastqc -q -t $task.cpus ${sample}_1.fastq.gz
+//         fastqc -q -t $task.cpus ${sample}_2.fastq.gz
+//         """
+//     }
+// }
+//
+// /*
+//  * STEP 2: Nanopore FastQ QC using NanoPlot
+//  */
+// process NANOPLOT {
+//     tag "$sample"
+//     label 'process_low'
+//     publishDir "${params.outdir}/nanoplot/${sample}", mode: params.publish_dir_mode
+//
+//     when:
+//     !params.skip_nanoplot && !params.skip_qc && long_reads
+//
+//     input:
+//     set val(sample), val(single_end), val(long_reads), file(reads) from ch_reads_nanoplot
+//
+//     output:
+//     file "*.{png,html,txt,log}"
 //
 //     script:
 //     """
-//     [ ! -f  ${sample}.fastq.gz ] && ln -s $fastq ${sample}.fastq.gz
-//     fastqc -q -t $task.cpus ${sample}.fastq.gz
+//     NanoPlot -t $task.cpus --fastq $reads
 //     """
 // }
+
+
+
+
+
 
 Channel.from(summary.collect{ [it.key, it.value] })
     .map { k,v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
@@ -265,9 +295,9 @@ process get_software_versions {
 }
 
 // /*
-//  * STEP 15 - MultiQC
+//  * STEP 10: MultiQC
 //  */
-// process MultiQC {
+// process MULTIQC {
 //     publishDir "${params.outdir}/multiqc", mode: 'copy'
 //
 //     when:
@@ -276,8 +306,8 @@ process get_software_versions {
 //     input:
 //     file (multiqc_config) from ch_multiqc_config
 //     file (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
+//     file ('fastqc/*') from ch_fastqc_reports_mqc.collect().ifEmpty([])
 //     file ('samtools/*')  from ch_sortbam_stats_mqc.collect().ifEmpty([])
-//     file ('fastqc/*')  from ch_fastqc_mqc.collect().ifEmpty([])
 //     file ('software_versions/*') from software_versions_yaml.collect()
 //     file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
 //
