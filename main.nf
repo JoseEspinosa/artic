@@ -286,6 +286,7 @@ process get_software_versions {
     echo $workflow.nextflow.version > v_nextflow.txt
     NanoPlot --version &> v_nanoplot.txt
     fastqc --version > v_fastqc.txt
+    echo \$(bwa 2>&1) > v_bwa.txt
     minimap2 --version &> v_minimap2.txt
     samtools --version > v_samtools.txt
     bedtools --version > v_bedtools.txt
