@@ -295,39 +295,39 @@ process get_software_versions {
     """
 }
 
-// /*
-//  * STEP 10: MultiQC
-//  */
-// process MULTIQC {
-//     publishDir "${params.outdir}/multiqc", mode: params.publish_dir_mode
-//
-//     when:
-//     !params.skip_multiqc
-//
-//     input:
-//     file (multiqc_config) from ch_multiqc_config
-//     file (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
-//     file ('fastqc/*') from ch_fastqc_reports_mqc.collect().ifEmpty([])
-//     file ('samtools/*')  from ch_sortbam_stats_mqc.collect().ifEmpty([])
-//     file ('software_versions/*') from software_versions_yaml.collect()
-//     file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
-//
-//     output:
-//     file "*multiqc_report.html" into ch_multiqc_report
-//     file "*_data"
-//     file "multiqc_plots"
-//
-//     script:
-//     rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
-//     rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
-//     custom_config_file = params.multiqc_config ? "--config $mqc_custom_config" : ''
-//     """
-//     multiqc . -f $rtitle $rfilename $custom_config_file -m custom_content -m fastqc -m samtools
-//     """
-// }
+/*
+ * STEP 10: MultiQC
+ */
+process MULTIQC {
+    publishDir "${params.outdir}/multiqc", mode: params.publish_dir_mode
+
+    when:
+    !params.skip_multiqc
+
+    input:
+    file (multiqc_config) from ch_multiqc_config
+    file (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
+    file ('fastqc/*') from ch_fastqc_reports_mqc.collect().ifEmpty([])
+    //file ('samtools/*')  from ch_sortbam_stats_mqc.collect().ifEmpty([])
+    file ('software_versions/*') from ch_software_versions_yaml.collect()
+    file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
+
+    output:
+    file "*multiqc_report.html" into ch_multiqc_report
+    file "*_data"
+    file "multiqc_plots"
+
+    script:
+    rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
+    rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
+    custom_config_file = params.multiqc_config ? "--config $mqc_custom_config" : ''
+    """
+    multiqc . -f $rtitle $rfilename $custom_config_file -m custom_content -m fastqc -m samtools
+    """
+}
 
 /*
- * STEP 3 - Output Description HTML
+ * STEP 11: Output Description HTML
  */
 process output_documentation {
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode
